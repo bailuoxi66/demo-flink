@@ -2,7 +2,6 @@ package com.example.wc;
 
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
@@ -15,9 +14,8 @@ public class StreamWordCount {
         // 创建流处理执行环境
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-        // 从文件中读取数据
-        String inputPath = "E:\\Tech\\demo-flink\\src\\main\\resources\\hello.txt";
-        DataStream<String> inputDataStream = env.readTextFile(inputPath);
+        // 从socket 中读取数据
+        DataStream<String> inputDataStream = env.socketTextStream("localhost", 7777);
 
         // keyBy是根据当前key的hashcode对数据进行重分区的操作
         SingleOutputStreamOperator<Tuple2<String, Integer>> resultStream =
