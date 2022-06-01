@@ -5,8 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="faffd3a6-dc63-4443-a4d0-d7813384b848" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/example/wc/StreamWordCount.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/example/wc/StreamWordCount.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/wc/StreamWordCount.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,20 +48,7 @@
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
   }
 }</component>
-  <component name="RunManager" selected="Application.StreamWordCount">
-    <configuration name="StreamWordCount" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.example.wc.StreamWordCount" />
-      <module name="demo-flink" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.example.wc.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
+  <component name="RunManager" selected="Application.com.example.wc.StreamWordCount">
     <configuration name="WordCount" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="com.example.wc.WordCount" />
       <module name="demo-flink" />
@@ -76,9 +62,27 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="com.example.wc.StreamWordCount" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.example.wc.StreamWordCount" />
+      <module name="demo-flink" />
+      <option name="PROGRAM_PARAMETERS" value="--host localhost --port 7777" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.example.wc.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.com.example.wc.StreamWordCount" />
+      <item itemvalue="Application.WordCount" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.StreamWordCount" />
+        <item itemvalue="Application.com.example.wc.StreamWordCount" />
         <item itemvalue="Application.WordCount" />
       </list>
     </recent_temporary>
