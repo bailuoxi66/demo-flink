@@ -14,7 +14,7 @@ public class StreamWordCount {
     public static void main(String[] args) throws Exception {
         // 创建流处理执行环境
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
+        // env.setParallelism(1);
 
         // 从socket 中读取数据
         // 使用parameter tool工具从程序启动参数中提取配置项
@@ -28,9 +28,9 @@ public class StreamWordCount {
         SingleOutputStreamOperator<Tuple2<String, Integer>> resultStream =
                 inputDataStream.flatMap(new WordCount.MyFlatMapper())
                 .keyBy(0)
-                .sum(1);
+                .sum(1).setParallelism(2);
 
-        resultStream.print();
+        resultStream.print().setParallelism(1);
 
         // 请注意：当前是流数据场景，来一个处理一个，上面提前定义的是数据的操作处理流程，所以需要先将服务启动，然后等待数据，处理数据
         // 上述只是定义任务
