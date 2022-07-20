@@ -26,9 +26,9 @@ public class StreamWordCount {
 
         // keyBy是根据当前key的hashcode对数据进行重分区的操作
         SingleOutputStreamOperator<Tuple2<String, Integer>> resultStream =
-                inputDataStream.flatMap(new WordCount.MyFlatMapper())
+                inputDataStream.flatMap(new WordCount.MyFlatMapper()).slotSharingGroup("green")
                 .keyBy(0)
-                .sum(1).setParallelism(2);
+                .sum(1).setParallelism(2).slotSharingGroup("red");
 
         resultStream.print().setParallelism(1);
 
