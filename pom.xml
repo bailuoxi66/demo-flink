@@ -39,5 +39,12 @@
             <artifactId>flink-connector-kafka-0.11_2.12</artifactId>
             <version>1.10.1</version>
         </dependency>
+
+        <!--需要注意的是：bahir里面提供的版本只有2.11的，没有2.12的-->
+        <dependency>
+            <groupId>org.apache.bahir</groupId>
+            <artifactId>flink-connector-redis_2.11</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 </project>
