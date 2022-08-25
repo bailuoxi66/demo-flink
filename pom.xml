@@ -32,5 +32,12 @@
             <version>1.18.24</version>
             <scope>compile</scope>
         </dependency>
+
+        <!--flink连接kafka的连接器，0.11是kafka版本，2.12是scale版本-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-kafka-0.11_2.12</artifactId>
+            <version>1.10.1</version>
+        </dependency>
     </dependencies>
 </project>
