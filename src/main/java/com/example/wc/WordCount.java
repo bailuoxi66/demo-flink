@@ -17,7 +17,7 @@ public class WordCount {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
         // 从文件中读取数据
-        String inputPath = "E:\\Tech\\demo-flink\\src\\main\\resources\\hello.txt";
+        String inputPath = "E:\\Tech\\TTTTT\\demo-flink\\src\\main\\resources\\hello.txt";
 
         // DataSource是一个数据源，其实是一个Operator算子，本质上是DataSet
         // 因为DataSet是父类，所以这里可以直接写DataSet
