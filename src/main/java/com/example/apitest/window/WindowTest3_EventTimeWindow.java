@@ -5,7 +5,9 @@ import org.apache.commons.collections.IteratorUtils;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
@@ -19,7 +21,8 @@ public class WindowTest3_EventTimeWindow {
 
         // 创建流处理执行环境
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        // env.setParallelism(1);
+        env.setParallelism(1);
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         // 从socket读取数据
         DataStream<String> inputDataStream = env.socketTextStream("localhost", 7772);
@@ -44,6 +47,10 @@ public class WindowTest3_EventTimeWindow {
                     }
                 })
                 ;
+
+        SingleOutputStreamOperator<SensorReading> minTemperature = dataStream.keyBy("id").timeWindow(Time.seconds(15))
+                .minBy("temperature");
+        minTemperature.print("minTemp");
         env.execute();
     }
 }
