@@ -69,5 +69,10 @@ public class StateTest3_KeyedStateApplicationCase {
             // 更新传感器的结果
             lastTempState.update(value.getTemperature());
         }
+
+        @Override
+        public void close() throws Exception {
+            lastTempState.clear();
+        }
     }
 }
