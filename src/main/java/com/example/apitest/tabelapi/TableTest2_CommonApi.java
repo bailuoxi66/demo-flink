@@ -60,9 +60,27 @@ public class TableTest2_CommonApi {
 
         Table inputTable = tableEnv.from("inputTable");
 
-        inputTable.printSchema();
-        tableEnv.toAppendStream(inputTable, Row.class).print();
+//        inputTable.printSchema();
+//        tableEnv.toAppendStream(inputTable, Row.class).print();
 
+        // 3. 查询转换
+        // 3.1 Table API
+        // 简单转换
+        Table resultTable = inputTable.select("id, temp")
+                        .filter("id == 'sensor_6'");
+
+        // 聚合统计
+        Table aggTable = inputTable.groupBy("id")
+                        .select("id, id.count as count, temp.avg as avgTemp");
+
+        // 3.2 SQL
+        tableEnv.sqlQuery("select id, temp from inputTable where id = 'sensor_6'");
+        Table sqlAggTable = tableEnv.sqlQuery("select id, count(id) as cnt, avg(temp) as avgTemp from inputTable group by id");
+
+        // 打印输出
+        tableEnv.toAppendStream(resultTable, Row.class).print("result");
+        tableEnv.toRetractStream(aggTable, Row.class).print("agg");
+        tableEnv.toRetractStream(sqlAggTable, Row.class).print("sqlagg");
         env.execute();
 
     }
