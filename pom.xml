@@ -65,5 +65,18 @@
             <artifactId>flink-statebackend-rocksdb_2.12</artifactId>
             <version>1.10.1</version>
         </dependency>
+
+        <!--Table API真的是一个依赖，相当于引入的计划器 _ 老版本    flink1.10的时候，新版本不稳定，所以会默认使用老版本-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-planner_2.12</artifactId>
+            <version>1.10.1</version>
+        </dependency>
+        <!--Table API真的是一个依赖，相当于引入的计划器 _ 新版本-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-planner-blink_2.12</artifactId>
+            <version>1.10.1</version>
+        </dependency>
     </dependencies>
 </project>
