@@ -7,6 +7,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.Tumble;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 
@@ -39,8 +40,26 @@ public class TableTest5_TimeAndWindow {
         // 4. 将流转换成表，定义时间特性
         // Table dataTable = tableEnv.fromDataStream(dataStream, "id, timestamp as ts, temperature as temp, pt.proctime");
         Table dataTable = tableEnv.fromDataStream(dataStream, "id, timestamp as ts, temperature as temp, rt.rowtime");
-        dataTable.printSchema();
-        tableEnv.toAppendStream(dataTable, Row.class).print();
+
+        tableEnv.createTemporaryView("sensor", dataTable);
+
+        // 5.1 Group Window
+        // table api
+        // 5. 窗口操作
+        // 5.1 Group Window
+        // table API
+        Table resultTable = dataTable.window(Tumble.over("10.seconds").on("rt").as("tw"))
+            .groupBy("id, tw")
+            .select("id, id.count, temp.avg, tw.end");
+
+        // SQL
+        Table resultSqlTable = tableEnv.sqlQuery("select id, count(id) as cnt, avg(temp) as avgTemp, tumble_end(rt, interval '10' second) " +
+            "from sensor group by id, tumble(rt, interval '10' second)");
+
+
+        // dataTable.printSchema();
+        tableEnv.toAppendStream(resultTable, Row.class).print("result");
+        tableEnv.toRetractStream(resultSqlTable, Row.class).print("sql");
 
         env.execute();
     }
