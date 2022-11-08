@@ -64,8 +64,6 @@ public class HotItems {
             }
         });
 
-        userBehaviorDataStream.print("user...");
-
         // 4. 分组开窗聚合，得到每个窗口内各个商品的count值
         //        DataStream<ItemViewCount> windowAggStream = userBehaviorDataStream
         SingleOutputStreamOperator<ItemViewCount> windowAggStream = userBehaviorDataStream
@@ -76,16 +74,16 @@ public class HotItems {
             // 滑动窗口
             .timeWindow(Time.hours(1), Time.minutes(5))
             .aggregate(new ItemCountAgg(), new WindowItemCountResult());
-        windowAggStream.print();
+        // windowAggStream.print();
 
         // 5. 收集同一窗口的所有商品的count数据，排序输出top n
-//        DataStream<String> resultStream = windowAggStream
-//            // 按照窗口分组
-//            .keyBy(ItemViewCount::getWindowEnd)
-//            // 用自定义处理函数排序取前5
-//            .process(new TopNHotItems(5));
+        DataStream<String> resultStream = windowAggStream
+            // 按照窗口分组
+            .keyBy(ItemViewCount::getWindowEnd)
+            // 用自定义处理函数排序取前5
+            .process(new TopNHotItems(5));
 
-        // resultStream.print();
+         resultStream.print();
 
         env.execute("hot items analysis");
     }
