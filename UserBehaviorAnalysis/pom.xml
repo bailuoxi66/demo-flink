@@ -13,6 +13,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>HotItemsAyalysis</module>
+        <module>NetworkFlowAnalysis</module>
     </modules>
 
     <properties>
