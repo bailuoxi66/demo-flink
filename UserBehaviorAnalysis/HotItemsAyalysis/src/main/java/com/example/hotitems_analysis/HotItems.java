@@ -2,11 +2,16 @@ package com.example.hotitems_analysis;
 
 import org.apache.commons.compress.utils.Lists;
 import org.apache.flink.api.common.functions.AggregateFunction;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.state.ListState;
 import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.api.java.tuple.Tuple;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSink;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
@@ -15,25 +20,38 @@ import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.util.Collector;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 import com.example.hotitems_analysis.beans.ItemViewCount;
 import com.example.hotitems_analysis.beans.UserBehavior;
 
 public class HotItems {
-
     public static void main(String[] args) throws Exception {
         // 1. 创建执行环境
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
         // 设置并行度为1
         env.setParallelism(1);
 
         // 2. 从csv文件中获取数据
-        DataStream<String> inputStream = env.readTextFile("E:\\Tech\\TTTTT\\demo-flink\\UserBehaviorAnalysis\\HotItemsAyalysis\\src\\main\\resources\\UserBehavior.csv");
+        // DataStream<String> inputStream = env.readTextFile("E:\\Tech\\TTTTT\\demo-flink\\UserBehaviorAnalysis\\HotItemsAyalysis\\src\\main\\resources\\UserBehavior.csv");
+
+        Properties properties = new Properties();
+        properties.setProperty("bootstrap.servers", "hadoop102:9092");
+        properties.setProperty("group.id", "consumer");
+// 下面是一些次要参数
+        properties.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        properties.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+        properties.setProperty("auto.offset.reset", "latest");
+
+// 2. 从kafka消费数据
+        DataStream<String> inputStream = env.addSource(new FlinkKafkaConsumer<>("hotitems", new SimpleStringSchema(), properties ));
 
         // 3. 转换成POJO,分配时间戳和watermark
         DataStream<UserBehavior> userBehaviorDataStream = inputStream.map(line -> {
@@ -46,25 +64,28 @@ public class HotItems {
             }
         });
 
+        userBehaviorDataStream.print("user...");
+
         // 4. 分组开窗聚合，得到每个窗口内各个商品的count值
         //        DataStream<ItemViewCount> windowAggStream = userBehaviorDataStream
-        DataStream<ItemViewCount> windowAggStreams = userBehaviorDataStream
+        SingleOutputStreamOperator<ItemViewCount> windowAggStream = userBehaviorDataStream
             // 过滤只保留pv行为
             .filter(userBehavior -> "pv".equals(userBehavior.getBehavior()))
             // 按照商品ID分组
             .keyBy(UserBehavior::getItemId)
             // 滑动窗口
-            .window(SlidingEventTimeWindows.of(Time.hours(1), Time.minutes(5)))
+            .timeWindow(Time.hours(1), Time.minutes(5))
             .aggregate(new ItemCountAgg(), new WindowItemCountResult());
+        windowAggStream.print();
 
         // 5. 收集同一窗口的所有商品的count数据，排序输出top n
-        DataStream<String> resultStream = windowAggStreams
-            // 按照窗口分组
-            .keyBy("windowEnd")
-            // 用自定义处理函数排序取前5
-            .process(new TopNHotItems(5));
+//        DataStream<String> resultStream = windowAggStream
+//            // 按照窗口分组
+//            .keyBy(ItemViewCount::getWindowEnd)
+//            // 用自定义处理函数排序取前5
+//            .process(new TopNHotItems(5));
 
-        resultStream.print();
+        // resultStream.print();
 
         env.execute("hot items analysis");
     }
@@ -105,7 +126,7 @@ public class HotItems {
     }
 
     // 实现自定义KeyedProcessFunction
-    public static class TopNHotItems extends KeyedProcessFunction<Tuple, ItemViewCount, String> {
+    public static class TopNHotItems extends KeyedProcessFunction<Long, ItemViewCount, String> {
 
         // 定义属性， TopN的大小
         private Integer topSize;
