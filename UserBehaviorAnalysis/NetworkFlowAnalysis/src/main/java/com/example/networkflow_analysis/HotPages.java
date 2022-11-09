@@ -7,6 +7,7 @@ import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
@@ -16,6 +17,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.streaming.api.windowing.windows.Window;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 import java.net.URL;
 import java.sql.Timestamp;
@@ -33,8 +35,9 @@ public class HotPages {
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         // 读取文件，转换成POJO
-        URL resource = HotPages.class.getResource("/apache.log");
-        DataStream<String> inputStream = env.readTextFile(resource.getPath());
+//        URL resource = HotPages.class.getResource("/apache.log");
+//        DataStream<String> inputStream = env.readTextFile(resource.getPath());
+        DataStreamSource<String> inputStream = env.socketTextStream("localhost", 7777);
 
         DataStream<ApacheLogEvent> dataStream = inputStream
             .map(line -> {
@@ -43,12 +46,17 @@ public class HotPages {
                 Long timestamp = simpleDateFormat.parse(fields[3]).getTime();
                 return new ApacheLogEvent(fields[0], fields[1], timestamp, fields[5], fields[6]);
             })
-            .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<ApacheLogEvent>(Time.minutes(1)) {
+            .assignTimestampsAndWatermarks(new BoundedOutOfOrdernessTimestampExtractor<ApacheLogEvent>(Time.seconds(1)) {
                 @Override
                 public long extractTimestamp(ApacheLogEvent element) {
                     return element.getTimestamp();
                 }
             });
+
+        dataStream.print("data");
+
+        // 定义一个测输出流标签
+        OutputTag<ApacheLogEvent> lateTag = new OutputTag<ApacheLogEvent>("late"){};
 
         // 分组开窗聚合
         SingleOutputStreamOperator<PageViewCount> windowAggStream = dataStream
@@ -61,7 +69,12 @@ public class HotPages {
             // 按照url分组
             .keyBy(ApacheLogEvent::getUrl)
             .timeWindow(Time.minutes(10), Time.seconds(5))
+            .allowedLateness(Time.minutes(1))
+            .sideOutputLateData(lateTag)
             .aggregate(new PageCountAgg(), new PageCountResult());
+
+        windowAggStream.print("agg");
+        windowAggStream.getSideOutput(lateTag).print("late");
 
         // 收集同一窗口count数据，排序输出
         DataStream<String> resultStream = windowAggStream.keyBy(PageViewCount::getWindowEnd)
@@ -151,6 +164,8 @@ public class HotPages {
             Thread.sleep(1000L);
 
             out.collect(resultBuilder.toString());
+
+            pageViewCountListState.clear();
         }
     }
 }
