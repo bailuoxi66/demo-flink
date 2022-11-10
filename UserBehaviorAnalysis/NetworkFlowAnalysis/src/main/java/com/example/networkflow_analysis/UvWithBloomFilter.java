@@ -9,6 +9,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.triggers.Trigger;
 import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.table.expressions.In;
 
 import java.net.URL;
 
@@ -68,6 +69,25 @@ public class UvWithBloomFilter {
         @Override
         public void clear(TimeWindow window, TriggerContext ctx) throws Exception {
 
+        }
+    }
+
+    // 自定义一个布隆过滤器
+    public static class MyBloomFilter{
+        // 定义位图的大小，一般需要定义为2的整次幂
+        private Integer cap;
+
+        public MyBloomFilter(Integer cap){
+            this.cap = cap;
+        }
+
+        // 实现一个hash函数
+        public Long hashCode(String value, Integer seed){
+            Long result = 0L;
+            for (int i=0; i<value.length(); i++){
+                result = result * seed + value.charAt(i);
+            }
+            return result & (cap - 1);
         }
     }
 }
