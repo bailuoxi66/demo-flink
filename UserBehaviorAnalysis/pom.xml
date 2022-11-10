@@ -14,6 +14,7 @@
     <modules>
         <module>HotItemsAyalysis</module>
         <module>NetworkFlowAnalysis</module>
+        <module>Marketanalysis</module>
     </modules>
 
     <properties>
