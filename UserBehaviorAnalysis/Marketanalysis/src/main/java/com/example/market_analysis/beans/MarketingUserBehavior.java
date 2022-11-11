@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MarketUserBehavior {
+public class MarketingUserBehavior {
     private Long userId;
     private String behavior;
     private String channel;
