@@ -16,6 +16,7 @@
         <module>NetworkFlowAnalysis</module>
         <module>Marketanalysis</module>
         <module>LoginFailDetect</module>
+        <module>OrderPayDetect</module>
     </modules>
 
     <properties>
