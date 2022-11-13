@@ -43,7 +43,7 @@ public class LoginFailWithCep {
         // cep三步骤
         // 1. 定义一个匹配模式
         // firstFail -> secondFail, within 2s
-        Pattern<LoginEvent, LoginEvent> LoginFailPattern = Pattern.<LoginEvent>begin("firstFail").where(new SimpleCondition<LoginEvent>() {
+        Pattern<LoginEvent, LoginEvent> LoginFailPattern0 = Pattern.<LoginEvent>begin("firstFail").where(new SimpleCondition<LoginEvent>() {
             @Override
             public boolean filter(LoginEvent value) throws Exception {
                 return "fail".equals(value.getLoginState());
@@ -59,6 +59,19 @@ public class LoginFailWithCep {
                 return "fail".equals(value.getLoginState());
             }
         }).within(Time.seconds(3));
+
+
+        // 使用新的模式解决连续登录失败
+        Pattern<LoginEvent, LoginEvent> LoginFailPattern = Pattern.<LoginEvent>begin("failEvents").where(new SimpleCondition<LoginEvent>() {
+            @Override
+            public boolean filter(LoginEvent value) throws Exception {
+                return "fail".equals(value.getLoginState());
+            }
+        }).times(3)
+            .consecutive()         // 会要求严格连续
+            .within(Time.seconds(5));
+
+
         // 2. 将匹配模式应用到数据流上，得到一个pattern stream
         PatternStream<LoginEvent> patternStream = CEP.pattern(loginEventStream.keyBy(LoginEvent::getUserId), LoginFailPattern);
         // 3. 检出符合匹配条件的复杂事件，进行转换处理，得到报警信息
@@ -74,9 +87,13 @@ public class LoginFailWithCep {
 
         @Override
         public LoginFailWarning select(Map<String, List<LoginEvent>> pattern) throws Exception {
-            LoginEvent firstFailEvent = pattern.get("firstFail").iterator().next();
-            LoginEvent secondFailEvent = pattern.get("thirdFail").get(0);
-            return new LoginFailWarning(firstFailEvent.getUserId(), firstFailEvent.getTimestamp(), secondFailEvent.getTimestamp(), "login fail 3 times");
+//            LoginEvent firstFailEvent = pattern.get("firstFail").iterator().next();
+//            LoginEvent secondFailEvent = pattern.get("thirdFail").get(0);
+//            return new LoginFailWarning(firstFailEvent.getUserId(), firstFailEvent.getTimestamp(), secondFailEvent.getTimestamp(), "login fail 3 times");
+            LoginEvent firstFailEvents = pattern.get("failEvents").get(0);
+            LoginEvent lastFailEvents = pattern.get("failEvents").get(pattern.get("failEvents").size() - 1);
+            return new LoginFailWarning(firstFailEvents.getUserId(), firstFailEvents.getTimestamp(), lastFailEvents.getTimestamp(), "login fail " + (pattern.get("failEvents").size() + " times"));
+
         }
     }
 }
