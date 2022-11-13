@@ -53,7 +53,12 @@ public class LoginFailWithCep {
             public boolean filter(LoginEvent value) throws Exception {
                 return "fail".equals(value.getLoginState());
             }
-        }).within(Time.seconds(2));
+        }).next("thirdFail").where(new SimpleCondition<LoginEvent>() {
+            @Override
+            public boolean filter(LoginEvent value) throws Exception {
+                return "fail".equals(value.getLoginState());
+            }
+        }).within(Time.seconds(3));
         // 2. 将匹配模式应用到数据流上，得到一个pattern stream
         PatternStream<LoginEvent> patternStream = CEP.pattern(loginEventStream.keyBy(LoginEvent::getUserId), LoginFailPattern);
         // 3. 检出符合匹配条件的复杂事件，进行转换处理，得到报警信息
@@ -70,8 +75,8 @@ public class LoginFailWithCep {
         @Override
         public LoginFailWarning select(Map<String, List<LoginEvent>> pattern) throws Exception {
             LoginEvent firstFailEvent = pattern.get("firstFail").iterator().next();
-            LoginEvent secondFailEvent = pattern.get("secondFail").get(0);
-            return new LoginFailWarning(firstFailEvent.getUserId(), firstFailEvent.getTimestamp(), secondFailEvent.getTimestamp(), "login fail 2 times");
+            LoginEvent secondFailEvent = pattern.get("thirdFail").get(0);
+            return new LoginFailWarning(firstFailEvent.getUserId(), firstFailEvent.getTimestamp(), secondFailEvent.getTimestamp(), "login fail 3 times");
         }
     }
 }
