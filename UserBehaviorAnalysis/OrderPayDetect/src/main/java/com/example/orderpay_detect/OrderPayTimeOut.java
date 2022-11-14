@@ -1,7 +1,9 @@
 package com.example.orderpay_detect;
 
 import org.apache.flink.cep.CEP;
+import org.apache.flink.cep.PatternSelectFunction;
 import org.apache.flink.cep.PatternStream;
+import org.apache.flink.cep.PatternTimeoutFunction;
 import org.apache.flink.cep.pattern.Pattern;
 import org.apache.flink.cep.pattern.conditions.SimpleCondition;
 import org.apache.flink.streaming.api.TimeCharacteristic;
@@ -12,6 +14,8 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.OutputTag;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 
 import com.example.orderpay_detect.beans.OrderEvent;
 import com.example.orderpay_detect.beans.OrderResult;
@@ -55,11 +59,29 @@ public class OrderPayTimeOut {
         PatternStream<OrderEvent> patternStream = CEP.pattern(orderEventStream.keyBy(OrderEvent::getOrderId), orderPayPattern);
 
         // 4. 调用select方法，实现对匹配复杂事件和超时复杂事件的提取和处理
-        SingleOutputStreamOperator<Object> resultStream = patternStream
+        SingleOutputStreamOperator<OrderResult> resultStream = patternStream
             .select(orderTimeoutTag, new OrderTimeoutSelect(), new OrderPaySelect());
 
         resultStream.print();
         resultStream.getSideOutput(orderTimeoutTag).print("timeout");
         env.execute("order timeout detect job");
+    }
+
+    public static class OrderTimeoutSelect implements PatternTimeoutFunction<OrderEvent, OrderResult>{
+
+        @Override
+        public OrderResult timeout(Map<String, List<OrderEvent>> pattern, long timestamp) throws Exception {
+            Long timeoutOrderId = pattern.get("create").iterator().next().getOrderId();
+            return new OrderResult(timeoutOrderId, "timeout " + timestamp);
+        }
+    }
+
+    public static class OrderPaySelect implements PatternSelectFunction<OrderEvent, OrderResult> {
+
+        @Override
+        public OrderResult select(Map<String, List<OrderEvent>> pattern) throws Exception {
+            Long payedOrderId = pattern.get("create").iterator().next().getOrderId();
+            return new OrderResult(payedOrderId, "payed");
+        }
     }
 }
